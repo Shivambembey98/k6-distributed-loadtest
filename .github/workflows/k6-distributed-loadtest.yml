@@ -49,7 +49,15 @@ jobs:
 
     - name: Run k6 on Slave Nodes
       run: |
-        terraform -chdir=terraform output -json > tf_output.json
+    # Run Terraform Output
+        terraform -chdir=terraform output -json | tee tf_output.json
+    
+        # Validate JSON file before parsing
+        if ! jq empty tf_output.json; then
+          echo "❌ Error: Invalid JSON in tf_output.json"
+          cat tf_output.json
+          exit 1
+        fi
     
         SLAVES=$(jq -r '.slave_ips.value[]' tf_output.json)
         MASTER="${{ secrets.MASTER_PRIVATE_IP }}"
