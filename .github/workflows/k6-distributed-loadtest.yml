@@ -49,7 +49,9 @@ jobs:
 
     - name: Run k6 on Slave Nodes
       run: |
-        SLAVES=$(terraform -chdir=terraform output -json slave_ips | jq -r '.value[]')
+        terraform -chdir=terraform output -json > tf_output.json
+    
+        SLAVES=$(jq -r '.slave_ips.value[]' tf_output.json)
         MASTER="${{ secrets.MASTER_PRIVATE_IP }}"
     
         for ip in $SLAVES; do
