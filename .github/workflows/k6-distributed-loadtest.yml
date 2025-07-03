@@ -49,15 +49,21 @@ jobs:
 
     - name: Run k6 on Slave Nodes
       run: |
-        echo "Getting clean Terraform output..."
-        CLEAN_JSON=$(terraform -chdir=terraform output -json 2>/dev/null)
+        # Write raw output to a file
+        terraform -chdir=terraform output -json > output.raw
     
-        # Validate and save JSON
-        echo "$CLEAN_JSON" | jq '.' > output.json || { echo "❌ Invalid JSON in CLEAN_JSON"; echo "$CLEAN_JSON"; exit 1; }
+        # Remove non-JSON lines (filter out anything before the opening brace)
+        sed -n '/^{/,$p' output.raw > output.json
+    
+        echo "--- Cleaned JSON ---"
+        cat output.json
+    
+        # Validate
+        jq '.' output.json || { echo "❌ Still not valid JSON"; exit 1; }
     
         jq -r '.slave_ips.value[]' output.json > slave_ips.txt
     
-        echo "Slave IPs:"
+        echo "--- Slave IPs ---"
         cat slave_ips.txt
     
         MASTER="${{ secrets.MASTER_PRIVATE_IP }}"
