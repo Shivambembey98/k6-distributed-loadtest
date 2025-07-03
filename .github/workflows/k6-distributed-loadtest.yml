@@ -49,7 +49,7 @@ jobs:
 
     - name: Run k6 on Slave Nodes
       run: |
-    # Run Terraform Output
+        # Run Terraform Output
         terraform -chdir=terraform output -json | tee tf_output.json
     
         # Validate JSON file before parsing
