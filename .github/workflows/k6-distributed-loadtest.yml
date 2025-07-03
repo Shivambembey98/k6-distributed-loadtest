@@ -49,14 +49,12 @@ jobs:
 
     - name: Run k6 on Slave Nodes
       run: |
-        echo "Fetching output from terraform..."
-        terraform -chdir=terraform output -json > output.json
+        echo "Getting clean Terraform output..."
+        CLEAN_JSON=$(terraform -chdir=terraform output -json 2>/dev/null)
     
-        echo "Validating output file..."
-        cat output.json
-        jq '.' output.json || { echo "❌ Invalid JSON!"; exit 1; }
+        # Validate and save JSON
+        echo "$CLEAN_JSON" | jq '.' > output.json || { echo "❌ Invalid JSON in CLEAN_JSON"; echo "$CLEAN_JSON"; exit 1; }
     
-        echo "Extracting slave IPs..."
         jq -r '.slave_ips.value[]' output.json > slave_ips.txt
     
         echo "Slave IPs:"
