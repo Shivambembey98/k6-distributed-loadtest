@@ -49,27 +49,30 @@ jobs:
 
     - name: Run k6 on Slave Nodes
       run: |
-        # Run Terraform Output
-        terraform -chdir=terraform output -json | tee tf_output.json
+        echo "Fetching output from terraform..."
+        terraform -chdir=terraform output -json > output.json
     
-        # Validate JSON file before parsing
-        if ! jq empty tf_output.json; then
-          echo "❌ Error: Invalid JSON in tf_output.json"
-          cat tf_output.json
-          exit 1
-        fi
+        echo "Validating output file..."
+        cat output.json
+        jq '.' output.json || { echo "❌ Invalid JSON!"; exit 1; }
     
-        SLAVES=$(jq -r '.slave_ips.value[]' tf_output.json)
+        echo "Extracting slave IPs..."
+        jq -r '.slave_ips.value[]' output.json > slave_ips.txt
+    
+        echo "Slave IPs:"
+        cat slave_ips.txt
+    
         MASTER="${{ secrets.MASTER_PRIVATE_IP }}"
     
-        for ip in $SLAVES; do
+        while IFS= read -r ip; do
           echo "Uploading test.js to $ip"
           scp -o StrictHostKeyChecking=no -i key.pem test/test.js ec2-user@$ip:~/
     
           echo "Running k6 test on $ip"
           ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip \
             "k6 run --out influxdb=http://$MASTER:8086/k6 test.js" &
-        done
+        done < slave_ips.txt
+
         wait
         echo "All load test on slaves completed"
 
