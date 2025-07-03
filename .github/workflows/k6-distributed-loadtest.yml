@@ -64,8 +64,8 @@ jobs:
           scp -o StrictHostKeyChecking=no -i key.pem test/test.js ec2-user@$ip:~/
     
           echo "Running k6 test on $ip"
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip \
-            "k6 run --out influxdb=http://$MASTER:8086/k6 test.js" &
+        ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip \
+          'k6 run --out influxdb=http://'"$MASTER"':8086/k6 ~/test.js' &
         done
 
         wait
