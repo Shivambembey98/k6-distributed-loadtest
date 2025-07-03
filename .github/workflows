@@ -1,0 +1,66 @@
+name: Distributed k6 Load Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  distributed-k6:
+    name: k6 Load Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.6.6
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+
+    - name: Terraform Apply (Create Spot Instances)
+      run: terraform apply -auto-approve
+      working-directory: ./terraform
+
+    - name: Wait for Instances to Boot
+      run: sleep 60
+
+    - name: Install SSH Key
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+        chmod 400 key.pem
+
+    - name: Install Dependencies
+      run: sudo apt-get update && sudo apt-get install -y jq
+
+    - name: Run k6 on Slave Nodes
+      run: |
+        SLAVES=$(terraform -chdir=terraform output -json | jq -r '.slave_ips.value[]')
+        MASTER="${{ secrets.MASTER_PRIVATE_IP }}"
+
+        for ip in $SLAVES; do
+          echo "Uploading test.js to $ip"
+          scp -o StrictHostKeyChecking=no -i key.pem test/test.js ec2-user@$ip:~/
+
+          echo "Starting k6 test on $ip"
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip \
+            "k6 run --out influxdb=http://$MASTER:8086/k6 test.js" &
+        done
+
+        wait
+        echo "All load test on slaves completed"
+
+    - name: Terraform Destroy 
+      if: always()
+      run: terraform destroy -auto-approve
+      working-directory: ./terraform
