@@ -32,6 +32,10 @@ jobs:
       run: terraform apply -auto-approve
       working-directory: ./terraform
 
+    - name: Debug Output from Terraform
+      run: terraform -chdir=terraform output -json
+
+
     - name: Wait for Instances to Boot
       run: sleep 60
 
