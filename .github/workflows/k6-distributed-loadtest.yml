@@ -52,7 +52,9 @@ jobs:
         terraform -chdir=terraform output -json > tf_output.json
     
         # Extract using grep + shell
-        SLAVES=$(grep -oP '(?<=")[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?=")' tf_output.json)
+        SLAVES=$(awk '/"value"/ {found=1; next} found && /\]/ {found=0} found' tf_output.json \
+         | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' \
+         | sort -u)
     
         echo "Detected Slave IPs:"
         echo "$SLAVES"
@@ -65,7 +67,7 @@ jobs:
     
           echo "Running k6 test on $ip"
         ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip \
-          'k6 run --out influxdb=http://'"$MASTER"':8086/k6 ~/test.js' &
+          "k6 run --out influxdb=http://$MASTER:8086/k6 ~/test.js" &
         done
 
         wait
