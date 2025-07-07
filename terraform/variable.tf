@@ -25,5 +25,5 @@ variable "subnet_id" {
 }
 
 variable "slave_count" {
-  default = 5
+  default = 1
 }
