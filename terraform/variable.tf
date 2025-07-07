@@ -21,7 +21,7 @@ variable "vpc_security_group_ids" {
 }
 
 variable "subnet_id" {
-  default = "subnet-0ef6c765988deee0c"
+  default = "subnet-03b40718ad179e9af"
 }
 
 variable "slave_count" {
