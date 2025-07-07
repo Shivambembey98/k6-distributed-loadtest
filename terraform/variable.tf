@@ -17,7 +17,7 @@ variable "ami_id" {
 variable "vpc_security_group_ids" {
   type        = list(string)
   description = "List of VPC security group IDs"
-  default     = ["sg-055bef90bd270c38a"]
+  default     = ["sg-0c228342595867ce9"]
 }
 
 variable "subnet_id" {
