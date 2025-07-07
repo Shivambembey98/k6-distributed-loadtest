@@ -85,7 +85,7 @@ jobs:
         echo "All load test on slaves completed"
 
 
-    - name: Terraform Destroy (Clean up)
-      if: always()
-      run: terraform destroy -auto-approve
-      working-directory: ./terraform
+    # - name: Terraform Destroy (Clean up)
+    #   if: always()
+    #   run: terraform destroy -auto-approve
+    #   working-directory: ./terraform
