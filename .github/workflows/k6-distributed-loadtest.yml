@@ -78,7 +78,23 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip "ls -l /home/ec2-user/test.js /home/ec2-user/run.sh"
     
           echo "Running k6 test on $ip"
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip "nohup bash /home/ec2-user/run.sh > run.log 2>&1 &" &
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@$ip << EOF
+            set -e
+            echo "Setting ulimit and system config for high file descriptors..."
+          
+            # Update limits.conf
+            echo -e "ec2-user soft nofile 100000\nec2-user hard nofile 100000" | sudo tee -a /etc/security/limits.conf
+          
+            # Ensure pam_limits.so is enabled
+            sudo grep -qxF 'session required pam_limits.so' /etc/pam.d/common-session || echo 'session required pam_limits.so' | sudo tee -a /etc/pam.d/common-session
+          
+            # Apply ulimit immediately for this shell
+            ulimit -n 100000
+            echo "ulimit after change: \$(ulimit -n)"
+          
+            # Run the test
+            nohup bash /home/ec2-user/run.sh > run.log 2>&1 &
+          EOF
         done
     
         wait
