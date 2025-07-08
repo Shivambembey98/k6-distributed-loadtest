@@ -2,8 +2,20 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export const options = {
-  vus: 250000, 
-  duration: '5m',
+  vus: 1000000, 
+  stages: [
+    { duration: '1m', target: 100000 },
+    { duration: '1m', target: 200000 },
+    { duration: '1m', target: 300000 },
+    { duration: '1m', target: 400000 },
+    { duration: '1m', target: 500000 },
+    { duration: '1m', target: 600000 },
+    { duration: '1m', target: 700000 },
+    { duration: '1m', target: 800000 },
+    { duration: '1m', target: 900000 },
+    { duration: '5m', target: 1000000 },
+    { duration: '2m', target: 0 },
+  ],
   thresholds: {
     http_req_duration: ['p(95)<8000'], // More realistic for UAT
     http_req_failed: ['rate<0.05'],   // Up to 5% errors tolerable in high-load UAT
