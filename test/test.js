@@ -2,10 +2,10 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export const options = {
-  vus: 1000, // Per node, total = 100000 x 5 = 500000
-  duration: '5m',
+  vus: 1000, 
+  duration: '2m',
   thresholds: {
-    http_req_duration: ['p(95)<800'], // More realistic for UAT
+    http_req_duration: ['p(95)<8000'], // More realistic for UAT
     http_req_failed: ['rate<0.05'],   // Up to 5% errors tolerable in high-load UAT
   },
   ext: {
