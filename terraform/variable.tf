@@ -3,7 +3,7 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  default = "c5.12xlarge"
+  default = "c5.24xlarge"
 }
 
 variable "key_name" {
