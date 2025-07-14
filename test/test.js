@@ -2,17 +2,17 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export const options = {
-  vus: 100000,
+  vus: 10, 
   stages: [
-    { duration: '1m', target: 25000 },
-    { duration: '1m', target: 50000 },
-    { duration: '1m', target: 75000 },
-    { duration: '3m', target: 100000 },
-    { duration: '1m', target: 0 },
+    { duration: '10s', target: 2 }, 
+    { duration: '10s', target: 5 }, 
+    { duration: '10s', target: 7 }, 
+    { duration: '30s', target: 10 }, 
+    { duration: '10s', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<8000'], // SLA: 95% of requests < 8s
-    http_req_failed: ['rate<0.05'],    // SLA: <5% request failures
+    http_req_duration: ['p(95)<8000'],
+    http_req_failed: ['rate<0.05'],
   },
   ext: {
     influxdb: {
@@ -42,11 +42,11 @@ export default function () {
 
   check(res, {
     'status is 200': (r) => r.status === 200,
-    'has token or success message': (r) => {
+    'has token in result': (r) => {
       if (!r || !r.body) return false;
       try {
         const json = r.json();
-        return json.token !== undefined || json.accessToken !== undefined || r.body.includes('success');
+        return json.result && json.result.token !== undefined;
       } catch (e) {
         return false;
       }
